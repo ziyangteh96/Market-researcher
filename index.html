@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Market Watch — US &amp; Malaysia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --page:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+    --accent:#2a78d6;
+    --s1:#2a78d6; --s2:#1baf7a; --s3:#eda100;
+    --up:#006300; --down:#b23434;
+    --up-bar:#0ca30c; --down-bar:#d03b3b;
+    --chip-on:#eaf1fb; --hover-wash:rgba(11,11,11,.035);
+    --tooltip-bg:#1a1a19; --tooltip-ink:#ffffff; --tooltip-ink2:#c3c2b7;
+    --track:#e1e0d9;
+    --good:#0ca30c; --warn:#c98500;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --page:#0d0d0d; --surface:#1a1a19;
+      --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+      --accent:#3987e5;
+      --s1:#3987e5; --s2:#199e70; --s3:#c98500;
+      --up:#0ca30c; --down:#e06060;
+      --up-bar:#0ca30c; --down-bar:#d03b3b;
+      --chip-on:#1d2a3c; --hover-wash:rgba(255,255,255,.05);
+      --tooltip-bg:#fcfcfb; --tooltip-ink:#0b0b0b; --tooltip-ink2:#52514e;
+      --track:#383835;
+    }
+  }
+  :root[data-theme="dark"]{
+    --page:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --accent:#3987e5;
+    --s1:#3987e5; --s2:#199e70; --s3:#c98500;
+    --up:#0ca30c; --down:#e06060;
+    --up-bar:#0ca30c; --down-bar:#d03b3b;
+    --chip-on:#1d2a3c; --hover-wash:rgba(255,255,255,.05);
+    --tooltip-bg:#fcfcfb; --tooltip-ink:#0b0b0b; --tooltip-ink2:#52514e;
+    --track:#383835;
+  }
+  :root[data-theme="light"]{
+    --page:#f9f9f7; --surface:#fcfcfb;
+    --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+    --accent:#2a78d6;
+    --s1:#2a78d6; --s2:#1baf7a; --s3:#eda100;
+    --up:#006300; --down:#b23434;
+    --up-bar:#0ca30c; --down-bar:#d03b3b;
+    --chip-on:#eaf1fb; --hover-wash:rgba(11,11,11,.035);
+    --tooltip-bg:#1a1a19; --tooltip-ink:#ffffff; --tooltip-ink2:#c3c2b7;
+    --track:#e1e0d9;
+  }
+
+  *{ box-sizing:border-box; }
+  html{ background:var(--page); }
+  body{
+    margin:0; background:var(--page); color:var(--ink);
+    font:14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1120px; margin:0 auto; padding:28px 20px 48px; display:flex; flex-direction:column; gap:20px; }
+  #panelMarkets, #panelIPO{ display:flex; flex-direction:column; gap:20px; }
+  #panelMarkets[hidden], #panelIPO[hidden]{ display:none; }
+
+  /* ---------- header ---------- */
+  .top{ display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; }
+  .eyebrow{
+    font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted);
+    font-family:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  h1{ margin:2px 0 0; font-size:24px; font-weight:650; letter-spacing:-.01em; text-wrap:balance; }
+  .meta{ display:flex; align-items:center; gap:10px; padding-bottom:3px; flex-wrap:wrap; }
+  .badge{
+    font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--accent); border:1px solid var(--accent); border-radius:999px; padding:2px 9px;
+  }
+  .asof{ color:var(--ink-2); font-size:13px; }
+
+  /* ---------- page tabs ---------- */
+  .tabs{ display:flex; gap:22px; border-bottom:1px solid var(--border); }
+  .tab{
+    appearance:none; border:0; background:transparent; color:var(--muted); font:inherit;
+    font-size:14px; font-weight:650; padding:9px 1px; margin-bottom:-1px; cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tab:hover{ color:var(--ink-2); }
+  .tab[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--accent); }
+  .tab:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  /* ---------- filter row ---------- */
+  .filters{ display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+  .fgroup{ display:flex; align-items:center; gap:8px; }
+  .flabel{ font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .chips{ display:flex; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:3px; }
+  .chip{
+    appearance:none; border:0; background:transparent; color:var(--ink-2);
+    font:inherit; font-size:13px; font-weight:500; padding:4px 12px; border-radius:6px; cursor:pointer;
+  }
+  .chip:hover{ background:var(--hover-wash); }
+  .chip[aria-pressed="true"]{ background:var(--chip-on); color:var(--accent); font-weight:600; }
+  .chip:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:16px 18px;
+  }
+  .card-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:4px; flex-wrap:wrap; }
+  .card-title{ font-size:15px; font-weight:650; margin:0; }
+  .card-sub{ color:var(--muted); font-size:12.5px; margin:1px 0 0; }
+
+  /* ---------- stat tiles ---------- */
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fit, minmax(168px, 1fr)); gap:12px; }
+  .tile{ display:flex; flex-direction:column; gap:7px; padding:14px 16px 12px; }
+  .tile .tlabel{ font-size:12px; color:var(--ink-2); display:flex; justify-content:space-between; gap:6px; align-items:baseline; }
+  .tile .tmkt{ font-size:10px; letter-spacing:.08em; color:var(--muted); text-transform:uppercase; }
+  .tile .tvalue{ font-size:24px; font-weight:650; letter-spacing:-.01em; line-height:1.1; }
+  .tdelta{ font-size:12.5px; font-weight:600; white-space:nowrap; }
+  .tdelta.up{ color:var(--up); } .tdelta.down{ color:var(--down); } .tdelta.flat{ color:var(--ink-2); }
+  .tasof{ font-size:11px; color:var(--muted); }
+
+  /* ---------- YTD performance bars ---------- */
+  .seg{ display:flex; gap:2px; background:var(--page); border:1px solid var(--border); border-radius:7px; padding:2px; }
+  .seg button{
+    appearance:none; border:0; background:transparent; color:var(--ink-2); font:inherit; font-size:12px;
+    padding:3px 10px; border-radius:5px; cursor:pointer;
+  }
+  .seg button[aria-pressed="true"]{ background:var(--surface); color:var(--ink); font-weight:600; box-shadow:0 0 0 1px var(--border); }
+  .seg button:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .ytd-rows{ display:flex; flex-direction:column; margin-top:10px; }
+  .ytd-row{
+    display:grid; grid-template-columns:150px 1fr; align-items:center; gap:10px;
+    padding:6px 4px; border-radius:5px;
+  }
+  .ytd-row:hover{ background:var(--hover-wash); }
+  .ytd-name{ display:flex; flex-direction:column; gap:1px; }
+  .ytd-name .n{ font-size:12.5px; color:var(--ink-2); font-weight:600; }
+  .ytd-name .d{ font-size:10.5px; color:var(--muted); }
+  .ytd-track{ position:relative; height:22px; }
+  .ytd-bar{ position:absolute; left:0; top:2px; height:18px; background:var(--s1); border-radius:0 4px 4px 0; }
+  .ytd-val{
+    position:absolute; top:1px; font-size:12px; font-weight:650; line-height:20px;
+    font-variant-numeric:tabular-nums; color:var(--ink-2);
+  }
+  .tbl-scroll{ overflow-x:auto; }
+
+  /* ---------- notable moves ---------- */
+  .grid-2{ display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:12px; }
+  .move-group-label{
+    font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+    margin:14px 0 4px; font-weight:650;
+  }
+  .move-group-label:first-of-type{ margin-top:10px; }
+  .move-row{ display:flex; align-items:flex-start; gap:10px; padding:6px 4px; border-radius:5px; }
+  .move-row:hover{ background:var(--hover-wash); }
+  .move-badge{
+    flex:none; display:inline-flex; align-items:center; gap:3px; font-size:11.5px; font-weight:650;
+    font-variant-numeric:tabular-nums; padding:2px 7px; border-radius:5px; margin-top:1px;
+  }
+  .move-badge.up{ color:var(--up); background:color-mix(in srgb, var(--up) 12%, transparent); }
+  .move-badge.down{ color:var(--down); background:color-mix(in srgb, var(--down) 12%, transparent); }
+  .move-badge.flat{ color:var(--ink-2); background:var(--hover-wash); }
+  .move-main{ display:flex; flex-direction:column; gap:1px; flex:1; min-width:0; }
+  .move-label{ font-size:13px; color:var(--ink); font-weight:600; }
+  .move-detail{ font-size:11.5px; color:var(--muted); }
+  .move-date{ flex:none; font-size:11px; color:var(--muted); white-space:nowrap; padding-top:2px; }
+  .move-note{ font-size:12px; color:var(--ink-2); margin-top:10px; padding-top:10px; border-top:1px solid var(--grid); }
+
+  /* ---------- watchlist table ---------- */
+  table{ border-collapse:collapse; width:100%; }
+  th, td{ text-align:left; padding:7px 12px; font-size:13px; border-bottom:1px solid var(--grid); white-space:nowrap; }
+  th{
+    color:var(--muted); font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+    border-bottom:1px solid var(--axis);
+  }
+  td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  tbody tr:hover{ background:var(--hover-wash); }
+  tbody tr:last-child td{ border-bottom:0; }
+  .tick{ font-family:ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size:12.5px; font-weight:600; }
+  .mchip{ font-size:10.5px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase; }
+  td .up{ color:var(--up); font-weight:600; } td .down{ color:var(--down); font-weight:600; }
+  td .na{ color:var(--muted); }
+  th.sortable{ cursor:pointer; user-select:none; }
+  th.sortable:hover{ color:var(--ink-2); }
+  th .arrow{ font-size:9px; margin-left:3px; }
+  .star{ color:var(--muted); font-size:10px; vertical-align:super; cursor:help; }
+
+  .meter{ display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .meter-track{ position:relative; width:64px; height:6px; background:var(--track); border-radius:3px; }
+  .meter-dot{ position:absolute; top:50%; width:7px; height:7px; border-radius:50%; background:var(--accent); transform:translate(-50%,-50%); }
+  .meter-dot.high{ background:var(--up-bar); }
+
+  /* ---------- IPO watch ---------- */
+  .ipo-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(380px, 1fr)); gap:14px; }
+  .ipo-card{ display:flex; flex-direction:column; gap:10px; }
+  .ipo-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .ipo-name{ font-size:15.5px; font-weight:700; letter-spacing:-.005em; text-wrap:balance; }
+  .ipo-sub{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .ipo-status{
+    flex:none; font-size:10.5px; font-weight:700; letter-spacing:.03em; text-transform:uppercase;
+    padding:3px 9px; border-radius:999px; white-space:nowrap;
+  }
+  .ipo-status.open{ color:var(--good); background:color-mix(in srgb, var(--good) 15%, transparent); }
+  .ipo-status.pending{ color:var(--warn); background:color-mix(in srgb, var(--warn) 16%, transparent); }
+  .ipo-status.listed{ color:var(--muted); background:var(--hover-wash); }
+  .ipo-desc{ font-size:12.5px; color:var(--ink-2); margin:0; }
+  .ipo-stats{ display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px 14px; }
+  .ipo-stat .k{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  .ipo-stat .v{ font-size:13.5px; font-weight:650; color:var(--ink); line-height:1.35; }
+  .ipo-timeline{
+    display:flex; flex-wrap:wrap; gap:5px 4px; align-items:center; font-size:11.5px;
+    padding-top:8px; border-top:1px solid var(--grid);
+  }
+  .ipo-timeline .stage{ padding:2px 7px; border-radius:5px; color:var(--muted); }
+  .ipo-timeline .stage.done{ color:var(--ink-2); text-decoration:line-through; text-decoration-color:var(--axis); }
+  .ipo-timeline .stage.now{ color:var(--ink); font-weight:700; background:var(--chip-on); }
+  .ipo-timeline .sep{ color:var(--axis); }
+  .ipo-oversub{ font-size:12.5px; color:var(--ink-2); }
+  .ipo-oversub b{ font-variant-numeric:tabular-nums; color:var(--ink); }
+  .ipo-note{ font-size:12px; color:var(--muted); }
+
+  footer{ color:var(--muted); font-size:12px; max-width:74ch; display:flex; flex-direction:column; gap:6px; }
+  footer a{ color:var(--accent); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .chip, .seg button, .ytd-row, .move-row{ transition:background .12s ease; }
+  }
+  @media (max-width:560px){
+    .ytd-row{ grid-template-columns:112px 1fr; }
+    h1{ font-size:20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">market_research</div>
+      <h1>Market Watch — US &amp; Malaysia</h1>
+    </div>
+    <div class="meta">
+      <span class="badge">Sourced snapshot</span>
+      <span class="asof">Data gathered 6–7 Jul 2026 · not real-time</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button class="tab" id="tabMarkets" role="tab" data-panel="markets" aria-selected="true">Markets</button>
+    <button class="tab" id="tabIpo" role="tab" data-panel="ipo" aria-selected="false">IPO Watch</button>
+  </nav>
+
+  <div id="panelMarkets">
+  <div class="filters" role="group" aria-label="Dashboard filters">
+    <div class="fgroup">
+      <span class="flabel">Market</span>
+      <div class="chips" id="marketChips">
+        <button class="chip" data-market="all" aria-pressed="true">All markets</button>
+        <button class="chip" data-market="us" aria-pressed="false">US</button>
+        <button class="chip" data-market="my" aria-pressed="false">Malaysia</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="tiles" id="tiles" aria-label="Index overview"></section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">Year-to-date performance, 2026</h2>
+        <p class="card-sub">Price return; each series dated to its most recently reported figure</p>
+      </div>
+      <div class="seg" id="ytdView">
+        <button data-view="chart" aria-pressed="true">Chart</button>
+        <button data-view="table" aria-pressed="false">Table</button>
+      </div>
+    </div>
+    <div class="ytd-rows" id="ytdRows"></div>
+    <div class="tbl-scroll" id="ytdTable" hidden></div>
+    <p class="hint" style="color:var(--muted); font-size:11.5px; margin-top:10px;">
+      S&amp;P 500 / Nasdaq / Dow figures are the most recent broadly-reported YTD returns (late May 2026);
+      FBM KLCI is computed from its 6 Jul close vs. its 31 Dec 2025 close. Different as-of dates reflect
+      what was actually available, not a synchronized read.
+    </p>
+  </section>
+
+  <section class="grid-2" id="sentimentCards">
+    <div class="card" data-market="us">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">US market sentiment</h2>
+          <p class="card-sub">Volatility &amp; investor-survey gauges</p>
+        </div>
+      </div>
+      <div id="usSentiment"></div>
+    </div>
+    <div class="card" data-market="my">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">Malaysia market sentiment</h2>
+          <p class="card-sub">Fund flows &amp; participation</p>
+        </div>
+      </div>
+      <div id="mySentiment"></div>
+    </div>
+  </section>
+
+  <section class="grid-2" id="movesCards">
+    <div class="card" data-market="us">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">US — notable sector moves</h2>
+          <p class="card-sub">Sector ETF &amp; index moves in the public record</p>
+        </div>
+      </div>
+      <div id="usMoves"></div>
+    </div>
+    <div class="card" data-market="my">
+      <div class="card-head">
+        <div>
+          <h2 class="card-title">Malaysia — notable sector moves</h2>
+          <p class="card-sub">Bursa Malaysia sectorial indices</p>
+        </div>
+      </div>
+      <div id="myMoves"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">Watchlist</h2>
+        <p class="card-sub" id="wlSub"></p>
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table id="wlTable">
+        <thead>
+          <tr>
+            <th class="sortable" data-key="ticker">Ticker<span class="arrow"></span></th>
+            <th>Name</th>
+            <th>Market</th>
+            <th class="num sortable" data-key="price">Price<span class="arrow"></span></th>
+            <th class="num sortable" data-key="chg">1D %<span class="arrow"></span></th>
+            <th class="num sortable" data-key="pe">P/E<span class="arrow"></span></th>
+            <th>52-wk range</th>
+          </tr>
+        </thead>
+        <tbody id="wlBody"></tbody>
+      </table>
+    </div>
+    <p class="hint" style="color:var(--muted); font-size:11.5px; margin-top:10px;">
+      "–" marks a figure not found in the sources reviewed at research time. <span class="star">*</span> marks a quote
+      dated earlier than the rest of this table (see row).
+    </p>
+  </section>
+  </div>
+
+  <div id="panelIPO" hidden>
+  <div class="filters" role="group" aria-label="IPO filters">
+    <div class="fgroup">
+      <span class="flabel">Market</span>
+      <div class="chips" id="ipoMarketChips">
+        <button class="chip" data-market="all" aria-pressed="true">All markets</button>
+        <button class="chip" data-market="us" aria-pressed="false">US</button>
+        <button class="chip" data-market="my" aria-pressed="false">Malaysia</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">IPO Watch</h2>
+        <p class="card-sub">Open, recently closed, and newly listed IPOs relevant to a subscription decision</p>
+      </div>
+    </div>
+    <div class="ipo-grid" id="ipoGrid" style="margin-top:10px;"></div>
+    <p class="hint" style="color:var(--muted); font-size:11.5px; margin-top:12px;">
+      Sourced from public prospectuses and financial news, 6–7 Jul 2026. Oversubscription and financial figures are
+      as most recently reported; "–" fields were not disclosed or not found. Not a recommendation to apply for any
+      offering — read the actual prospectus before subscribing.
+    </p>
+  </section>
+  </div>
+
+  <footer>
+    <div>
+      <strong>This is a research snapshot, not a live feed.</strong> Figures were gathered via web search on
+      6–7 Jul 2026 from public sources (Yahoo Finance, CNBC, Bursa Malaysia / KLSE Screener, stockanalysis.com,
+      GuruFocus, and similar) and are current only as of the date shown next to each figure. Different fields
+      were sourced at different times because that's what was publicly reported — cross-check before making any
+      investment decision. This page is not investment advice.
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- data (sourced from public web search, 6–7 Jul 2026) ---------------- */
+
+const TILES = [
+  { label:"S&P 500",          market:"us", mkt:"US", value:"7,537.43",  delta:"+0.72%", dir:1, asof:"6 Jul close" },
+  { label:"Nasdaq Composite", market:"us", mkt:"US", value:"26,121.16", delta:"+1.12%", dir:1, asof:"6 Jul close" },
+  { label:"Dow Jones",        market:"us", mkt:"US", value:"53,055.91", delta:"+0.29%", dir:1, asof:"6 Jul close" },
+  { label:"FBM KLCI",         market:"my", mkt:"MY", value:"1,683.53",  delta:"+0.27%", dir:1, asof:"6 Jul close" },
+  { label:"USD / MYR",        market:"my", mkt:"FX", value:"4.1403",    delta:"−0.18%", dir:-1, asof:"6 Jul, intraday" },
+  { label:"US 10Y yield",     market:"us", mkt:"US", value:"4.48%",     delta:"+0.2 bp", dir:0, asof:"6 Jul, intraday" }
+];
+
+const YTD = [
+  { name:"S&P 500",          market:"us", pct:11.0, asof:"as of 29 May 2026" },
+  { name:"Nasdaq Composite",  market:"us", pct:16.0, asof:"as of 29 May 2026" },
+  { name:"Dow Jones",         market:"us", pct:6.0,  asof:"as of 29 May 2026" },
+  { name:"FBM KLCI",          market:"my", pct:0.2,  asof:"as of 6 Jul 2026" }
+];
+
+const US_WEEK = [
+  { pct:"+2%", dir:1, label:"Technology (XLK)", detail:"Western Digital +7%, Teradyne +2.8%, Oracle +2.5%", date:"6 Jul" },
+  { pct:"+2%+", dir:1, label:"Utilities", detail:"Led a defensive rotation", date:"2–3 Jul" },
+  { pct:"+2%+", dir:1, label:"Health Care", detail:"Led a defensive rotation", date:"2–3 Jul" },
+  { pct:"+2%+", dir:1, label:"Consumer Staples", detail:"Led a defensive rotation", date:"2–3 Jul" }
+];
+const US_YTD_LEADERS = [
+  { pct:"+33%", dir:1, label:"Technology (XLK)", detail:"H1 2026 sector leader", date:"H1 2026" },
+  { pct:"+21%", dir:1, label:"Energy (XLE)", detail:"Supply disruptions, geopolitical premium", date:"H1 2026" },
+  { pct:"+20%", dir:1, label:"Industrials (XLI)", detail:"H1 2026", date:"H1 2026" }
+];
+
+const MY_WEEK = [
+  { pct:"+0.72%", dir:1, label:"Financial Services Index", detail:"19,626.23 (+140.46 pts)", date:"2 Jul" },
+  { pct:"+0.51%", dir:1, label:"Plantation Index", detail:"8,888.40 (+45.36 pts)", date:"2 Jul" },
+  { pct:"−0.52%", dir:-1, label:"Industrial Products & Services Index", detail:"179.45 (−0.94 pt)", date:"2 Jul" },
+  { pct:"−0.91%", dir:-1, label:"Energy Index", detail:"749.66 (−6.89 pts)", date:"2 Jul" }
+];
+const MY_NOTE = "Banking and telecom stocks led Bursa's gains on 2 Jul; consumer stocks led early gains on 3 Jul.";
+
+const US_SENTIMENT = [
+  { badge:"Low", dir:0, label:"VIX (volatility index)", detail:"15.81", date:"6 Jul close" },
+  { badge:"Neutral", dir:0, label:"CNN Fear & Greed Index", detail:"45 — up from 32 (\"Fear\") on 2 Jul", date:"7 Jul" },
+  { badge:"Bearish tilt", dir:-1, label:"AAII investor survey", detail:"Bullish 31.4% · Neutral 26.4% · Bearish 42.3%", date:"week of 2 Jul" }
+];
+const US_SENTIMENT_NOTE = "Options markets are calm and the Fear & Greed gauge has climbed off \"Fear,\" but individual investors surveyed by AAII are more bearish than bullish by 11 points — a real gap against the S&P's +11% and Nasdaq's +16% YTD gains. Take it as either a contrarian cushion (excess pessimism after a good run) or an early warning, depending on your view.";
+
+const MY_SENTIMENT = [
+  { badge:"Net selling", dir:-1, label:"Foreign fund flow", detail:"6th straight week of outflows (−RM10.7m, w/e 19 Jun) after +RM2.73b in Q1", date:"as of 19 Jun" },
+  { badge:"Net buying", dir:1, label:"Local institutions", detail:"10th straight week of inflows (+RM318.2m)", date:"early Jul" },
+  { badge:"Falling", dir:-1, label:"Trading participation", detail:"Retail volume −20.6%, local institutional volume −35.1%", date:"recent weeks" }
+];
+const MY_SENTIMENT_NOTE = "Foreign investors have sold Bursa for six straight weeks, but local institutions have offset that with ten straight weeks of buying, concentrated in tech, industrials and financial services (+RM319.8m combined) — consistent with the semiconductor and AI-data-centre themes elsewhere on this page. Overall volume is thinner, which can make lower-liquidity counters swing harder in either direction.";
+
+const WATCHLIST = [
+  { ticker:"AAPL",  name:"Apple",           market:"us", price:308.63, pricefmt:"$308.63", chg:4.84,  pe:37.3, lo:201.50, hi:317.40 },
+  { ticker:"MSFT",  name:"Microsoft",       market:"us", price:390.83, pricefmt:"$390.83", chg:1.62,  pe:23.3, lo:356.28, hi:555.45 },
+  { ticker:"NVDA",  name:"NVIDIA",          market:"us", price:195.84, pricefmt:"$195.84", chg:-1.39, pe:29.8, lo:null,   hi:null },
+  { ticker:"GOOGL", name:"Alphabet",        market:"us", price:366.66, pricefmt:"$366.66", chg:1.82,  pe:27.5, lo:140.53, hi:349.00 },
+  { ticker:"AMZN",  name:"Amazon",          market:"us", price:245.20, pricefmt:"$245.20", chg:1.04,  pe:29.0, lo:196.00, hi:278.56 },
+  { ticker:"1155.KL", name:"Malayan Banking", market:"my", price:10.90, pricefmt:"RM 10.90", chg:0.56,  pe:12.9, lo:9.39,  hi:12.42 },
+  { ticker:"1295.KL", name:"Public Bank",     market:"my", price:4.84,  pricefmt:"RM 4.84",  chg:-1.04, pe:12.3, lo:null,  hi:null },
+  { ticker:"5347.KL", name:"Tenaga Nasional", market:"my", price:14.56, pricefmt:"RM 14.56", chg:null,  pe:17.3, lo:12.50, hi:14.98 },
+  { ticker:"1023.KL", name:"CIMB Group",      market:"my", price:7.64,  pricefmt:"RM 7.64",  chg:-1.67, pe:null, lo:null,  hi:null },
+  { ticker:"5398.KL", name:"Gamuda",          market:"my", price:4.17,  pricefmt:"RM 4.17",  chg:-1.86, pe:22.4, lo:null,  hi:null },
+  { ticker:"6742.KL", name:"YTL Power",       market:"my", price:4.41,  pricefmt:"RM 4.41",  chg:null,  pe:null, lo:2.51,  hi:4.45, stale:true }
+];
+
+const IPOS = [
+  {
+    name:"Stratus Global Holdings Berhad",
+    market:"my", exchange:"Bursa Malaysia — Main Market",
+    sector:"Semiconductor automated material handling systems (AMHS)",
+    desc:"AMHS automation specialist for semiconductor fabs.",
+    price:"RM 0.80", raise:"RM 285.0m", mktCap:"RM 1.00b",
+    pe:"~15–20× (peer avg. ~35×, sources vary)",
+    fin:"RM 197m revenue (−11% YoY) · RM 51m net profit (−23% YoY)", finPeriod:"FYE Mar 2026",
+    retail:"25.0m shares by balloting (12.5m Bumiputera-reserved)",
+    oversub:null, oversubNote:null,
+    stages:[["Opened 2 Jul","done"],["Closes 10 Jul","now"],["Lists 21 Jul","pending"]],
+    status:"open", statusLabel:"Open — closes 10 Jul"
+  },
+  {
+    name:"SRKK AI Bhd",
+    market:"my", exchange:"Bursa Malaysia — ACE Market",
+    sector:"Digital transformation / AI-enabled IT solutions",
+    desc:"IT solutions provider; AI-enabled services are ~11% of revenue.",
+    price:"RM 0.32", raise:"RM 20.5m new + RM 4.2m offer-for-sale", mktCap:null,
+    pe:null,
+    fin:"RM 112.2m revenue · RM 6.8m net profit", finPeriod:"FY2025",
+    retail:"14.2m shares (retail tranche)",
+    oversub:"312.3×", oversubNote:"RM 1.4b in retail bids — a 2026 record",
+    stages:[["Closed 25 Jun","done"],["Balloted","done"],["Lists 9 Jul","now"]],
+    status:"pending", statusLabel:"Closed — lists 9 Jul"
+  },
+  {
+    name:"Enest Group Berhad",
+    market:"my", exchange:"Bursa Malaysia — ACE Market (transfer from LEAP)",
+    sector:"Bird's-nest processing / F&B",
+    desc:"China (63%) and Malaysia (36%) bird's-nest processor and exporter.",
+    price:"RM 0.13", raise:"RM 15.1m new + RM 2.0m offer-for-sale", mktCap:"RM 75.6m",
+    pe:null,
+    fin:"RM 158m revenue · RM 8m net profit", finPeriod:"FY2025",
+    retail:"85.33m shares applied for (public tranche)",
+    oversub:"1.94×", oversubNote:"2,871 applications worth RM 11.1m",
+    stages:[["Closed 2 Jul","done"],["Balloted 6 Jul","done"],["Lists 15 Jul","now"]],
+    status:"pending", statusLabel:"Closed — lists 15 Jul"
+  },
+  {
+    name:"SpaceX (Space Exploration Technologies Corp.)",
+    market:"us", exchange:"Nasdaq — SPCX",
+    sector:"Aerospace, launch & satellite services",
+    desc:"Already trading — 2026's largest listing, included for context, not as an open offer.",
+    price:"$135.00 IPO → $156.45 now (+15.9%)", raise:"$75.0b", mktCap:"$1.77t at IPO price",
+    pe:null,
+    fin:null, finPeriod:null,
+    retail:"~30% of the offering targeted for retail, via Schwab / Fidelity / Robinhood / SoFi / E*Trade",
+    oversub:null, oversubNote:null,
+    stages:[["Listed 12 Jun","done"],["Joined Nasdaq-100 7 Jul","now"]],
+    status:"listed", statusLabel:"Listed — already trading"
+  }
+];
+
+/* ---------------- state ---------------- */
+
+const state = { market:"all", ytdView:"chart", sortKey:null, sortDir:1, ipoMarket:"all" };
+
+/* ---------------- helpers ---------------- */
+
+const $ = (s, r) => (r || document).querySelector(s);
+
+function el(tag, attrs, ...kids){
+  const n = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)){
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else n.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) n.append(k);
+  return n;
+}
+const fmtPct1 = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "%";
+
+/* ---------------- stat tiles ---------------- */
+
+function renderTiles(){
+  const root = $("#tiles");
+  root.replaceChildren();
+  const show = TILES.filter(t => state.market === "all" || t.market === state.market);
+  for (const t of show){
+    const dirClass = t.dir > 0 ? "up" : t.dir < 0 ? "down" : "flat";
+    const arrow = t.dir > 0 ? "▲ " : t.dir < 0 ? "▼ " : "";
+    root.append(el("div", { class:"card tile" },
+      el("div", { class:"tlabel" }, el("span", { text:t.label }), el("span", { class:"tmkt", text:t.mkt })),
+      el("div", { class:"tvalue", text:t.value }),
+      el("span", { class:"tdelta " + dirClass, text:arrow + t.delta }),
+      el("span", { class:"tasof", text:t.asof })));
+  }
+}
+
+/* ---------------- YTD performance ---------------- */
+
+function renderYtd(){
+  const rows = YTD.filter(r => state.market === "all" || r.market === state.market);
+  const host = $("#ytdRows");
+  host.replaceChildren();
+  const maxV = Math.max(...rows.map(r => r.pct), 1) * 1.15;
+  for (const r of rows){
+    const wPct = Math.max(r.pct, 0.3) / maxV * 78;
+    const track = el("div", { class:"ytd-track" },
+      el("div", { class:"ytd-bar", style:`width:${wPct}%` }),
+      el("div", { class:"ytd-val", style:`left:calc(${wPct}% + 8px)`, text:fmtPct1(r.pct) }));
+    host.append(el("div", { class:"ytd-row", title:`${r.name}: ${fmtPct1(r.pct)}, ${r.asof}` },
+      el("div", { class:"ytd-name" },
+        el("span", { class:"n", text:r.name }),
+        el("span", { class:"d", text:r.asof })),
+      track));
+  }
+
+  const thead = el("thead", null, el("tr", null,
+    el("th", { text:"Index" }), el("th", { class:"num", text:"YTD return" }), el("th", { text:"As of" })));
+  const tbody = el("tbody", null, ...rows.map(r => el("tr", null,
+    el("td", { text:r.name }),
+    el("td", { class:"num", text:fmtPct1(r.pct) }),
+    el("td", { text:r.asof.replace("as of ", "") }))));
+  $("#ytdTable").replaceChildren(el("table", null, thead, tbody));
+}
+
+$("#ytdView").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  state.ytdView = b.dataset.view;
+  for (const x of document.querySelectorAll("#ytdView button")) x.setAttribute("aria-pressed", String(x === b));
+  $("#ytdRows").hidden = state.ytdView !== "chart";
+  $("#ytdTable").hidden = state.ytdView !== "table";
+});
+
+/* ---------------- notable moves ---------------- */
+
+function moveRow(m){
+  const cls = m.dir > 0 ? "up" : m.dir < 0 ? "down" : "flat";
+  const arrow = m.dir > 0 ? "▲ " : m.dir < 0 ? "▼ " : "";
+  const badgeText = m.badge != null ? m.badge : arrow + m.pct;
+  return el("div", { class:"move-row" },
+    el("span", { class:"move-badge " + cls, text:badgeText }),
+    el("div", { class:"move-main" },
+      el("span", { class:"move-label", text:m.label }),
+      el("span", { class:"move-detail", text:m.detail })),
+    el("span", { class:"move-date", text:m.date }));
+}
+
+function renderMoves(){
+  const us = $("#usMoves");
+  us.replaceChildren(
+    el("div", { class:"move-group-label", text:"This week" }),
+    ...US_WEEK.map(moveRow),
+    el("div", { class:"move-group-label", text:"2026 YTD sector leaders" }),
+    ...US_YTD_LEADERS.map(moveRow));
+
+  const my = $("#myMoves");
+  my.replaceChildren(
+    el("div", { class:"move-group-label", text:"This week" }),
+    ...MY_WEEK.map(moveRow),
+    el("p", { class:"move-note", text:MY_NOTE }));
+}
+
+function updateMoveCards(){
+  for (const card of document.querySelectorAll("#movesCards .card, #sentimentCards .card"))
+    card.hidden = state.market !== "all" && card.dataset.market !== state.market;
+}
+
+/* ---------------- market sentiment ---------------- */
+
+function renderSentiment(){
+  $("#usSentiment").replaceChildren(...US_SENTIMENT.map(moveRow), el("p", { class:"move-note", text:US_SENTIMENT_NOTE }));
+  $("#mySentiment").replaceChildren(...MY_SENTIMENT.map(moveRow), el("p", { class:"move-note", text:MY_SENTIMENT_NOTE }));
+}
+
+/* ---------------- watchlist ---------------- */
+
+function meter(lo, hi, price){
+  if (lo == null || hi == null) return el("span", { class:"na", text:"–" });
+  const pos = Math.max(0, Math.min(1, (price - lo) / (hi - lo)));
+  const wrap = el("div", { class:"meter" },
+    el("span", { text:lo.toFixed(2) }),
+    el("div", { class:"meter-track" },
+      el("div", { class:"meter-dot" + (pos >= 1 ? " high" : ""), style:`left:${pos * 100}%` })),
+    el("span", { text:hi.toFixed(2) }));
+  wrap.title = pos >= 1 ? "At or above 52-week high" : `52-week range ${lo} – ${hi}`;
+  return wrap;
+}
+
+function renderWatchlist(){
+  const body = $("#wlBody");
+  body.replaceChildren();
+  let rows = WATCHLIST.filter(r => state.market === "all" || r.market === state.market);
+  if (state.sortKey){
+    const k = state.sortKey, d = state.sortDir;
+    rows = [...rows].sort((a, b) => {
+      if (k === "ticker") return d * a.ticker.localeCompare(b.ticker);
+      const av = a[k], bv = b[k];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return d * (av - bv);
+    });
+  }
+  for (const r of rows){
+    const chgCell = r.chg == null
+      ? el("span", { class:"na", text:"–" })
+      : el("span", { class:r.chg >= 0 ? "up" : "down", text:fmtPct1(r.chg) });
+    const priceText = r.pricefmt + (r.stale ? "" : "");
+    body.append(el("tr", null,
+      el("td", null, el("span", { class:"tick", text:r.ticker }), r.stale ? el("span", { class:"star", title:"Quoted 1 Jul 2026, not 6–7 Jul like the rest of this table", text:" *" }) : null),
+      el("td", { text:r.name }),
+      el("td", null, el("span", { class:"mchip", text:r.market === "us" ? "US" : "MY" })),
+      el("td", { class:"num", text:priceText }),
+      el("td", { class:"num" }, chgCell),
+      el("td", { class:"num", text:r.pe == null ? "–" : r.pe.toFixed(1) }),
+      el("td", null, meter(r.lo, r.hi, r.price))));
+  }
+  $("#wlSub").textContent = `${rows.length} of ${WATCHLIST.length} holdings & candidates · prices in local currency, 6–7 Jul 2026`;
+  for (const th of document.querySelectorAll("#wlTable th.sortable")){
+    const a = th.querySelector(".arrow");
+    a.textContent = th.dataset.key === state.sortKey ? (state.sortDir > 0 ? "▲" : "▼") : "";
+  }
+}
+
+document.querySelector("#wlTable thead").addEventListener("click", e => {
+  const th = e.target.closest("th.sortable");
+  if (!th) return;
+  const k = th.dataset.key;
+  if (state.sortKey === k) state.sortDir *= -1;
+  else { state.sortKey = k; state.sortDir = k === "ticker" ? 1 : -1; }
+  renderWatchlist();
+});
+
+/* ---------------- IPO watch ---------------- */
+
+function statTile(k, v){
+  return v == null ? null : el("div", { class:"ipo-stat" },
+    el("div", { class:"k", text:k }), el("div", { class:"v", text:v }));
+}
+
+function ipoCard(ipo){
+  const stats = [
+    statTile("Price", ipo.price),
+    statTile("Raise", ipo.raise),
+    statTile("Market cap", ipo.mktCap),
+    statTile("P/E", ipo.pe),
+    statTile(ipo.finPeriod ? `Financials, ${ipo.finPeriod}` : "Financials", ipo.fin),
+    statTile("Retail tranche", ipo.retail)
+  ].filter(Boolean);
+
+  const timeline = el("div", { class:"ipo-timeline" });
+  ipo.stages.forEach((s, i) => {
+    if (i) timeline.append(el("span", { class:"sep", text:"→" }));
+    timeline.append(el("span", { class:"stage " + s[1], text:s[0] }));
+  });
+
+  const card = el("div", { class:"card ipo-card" },
+    el("div", { class:"ipo-head" },
+      el("div", null,
+        el("div", { class:"ipo-name", text:ipo.name }),
+        el("div", { class:"ipo-sub", text:ipo.exchange + " · " + ipo.sector })),
+      el("span", { class:"ipo-status " + ipo.status, text:ipo.statusLabel })),
+    el("p", { class:"ipo-desc", text:ipo.desc }),
+    el("div", { class:"ipo-stats" }, ...stats),
+    timeline);
+
+  if (ipo.oversub)
+    card.append(el("div", { class:"ipo-oversub" },
+      "Oversubscribed ", el("b", { text:ipo.oversub }),
+      ipo.oversubNote ? " — " + ipo.oversubNote : ""));
+
+  return card;
+}
+
+function renderIPOs(){
+  const grid = $("#ipoGrid");
+  grid.replaceChildren();
+  const order = { open:0, pending:1, listed:2 };
+  const rows = IPOS
+    .filter(i => state.ipoMarket === "all" || i.market === state.ipoMarket)
+    .sort((a, b) => order[a.status] - order[b.status]);
+  for (const ipo of rows) grid.append(ipoCard(ipo));
+}
+
+/* ---------------- controls ---------------- */
+
+function bindChips(rootId, dataKey, onPick){
+  const root = $("#" + rootId);
+  root.addEventListener("click", e => {
+    const b = e.target.closest(".chip");
+    if (!b) return;
+    for (const c of root.querySelectorAll(".chip")) c.setAttribute("aria-pressed", String(c === b));
+    onPick(b.dataset[dataKey]);
+  });
+}
+
+bindChips("marketChips", "market", v => {
+  state.market = v;
+  renderTiles(); renderYtd(); updateMoveCards(); renderWatchlist();
+});
+bindChips("ipoMarketChips", "market", v => {
+  state.ipoMarket = v;
+  renderIPOs();
+});
+
+const tabs = document.querySelectorAll(".tab");
+tabs.forEach(t => t.addEventListener("click", () => {
+  tabs.forEach(x => x.setAttribute("aria-selected", String(x === t)));
+  $("#panelMarkets").hidden = t.dataset.panel !== "markets";
+  $("#panelIPO").hidden = t.dataset.panel !== "ipo";
+}));
+
+/* ---------------- boot ---------------- */
+
+renderTiles();
+renderYtd();
+renderSentiment();
+renderMoves();
+updateMoveCards();
+renderWatchlist();
+renderIPOs();
+</script>
+
+</body>
+</html>
