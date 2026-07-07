@@ -388,8 +388,9 @@
       </table>
     </div>
     <p class="hint" style="color:var(--muted); font-size:11.5px; margin-top:10px;">
-      First version tracks USD/MYR only — more pairs will be added as the watchlist grows. "–" marks a figure
-      not found in the sources reviewed at research time.
+      Ringgit crosses against the most widely-traded currencies — MYR is the anchor (quote) currency throughout,
+      so each rate is "1 unit of the base currency in MYR" (JPY is quoted per 100¥, the market convention for a
+      low-value currency). "–" marks a figure not found in the sources reviewed at research time.
     </p>
   </section>
   </div>
@@ -489,7 +490,15 @@ const MY_SENTIMENT = [
 const MY_SENTIMENT_NOTE = "Foreign investors have sold Bursa for six straight weeks, but local institutions have offset that with ten straight weeks of buying, concentrated in tech, industrials and financial services (+RM319.8m combined) — consistent with the semiconductor and AI-data-centre themes elsewhere on this page. Overall volume is thinner, which can make lower-liquidity counters swing harder in either direction.";
 
 const FX_WATCHLIST = [
-  { pair:"USD/MYR", name:"US Dollar / Malaysian Ringgit", rate:4.1403, ratefmt:"4.1403", chg:-0.18, lo:4.1180, hi:4.4750, asof:"6 Jul 2026, intraday" }
+  { pair:"USD/MYR", name:"US Dollar / Malaysian Ringgit",        rate:4.1403, ratefmt:"4.1403", chg:-0.18, lo:4.1180, hi:4.4750, asof:"6 Jul 2026, intraday" },
+  { pair:"EUR/MYR", name:"Euro / Malaysian Ringgit",             rate:4.6563, ratefmt:"4.6563", chg:null,  lo:null,   hi:null,   asof:"7 Jul 2026, intraday" },
+  { pair:"GBP/MYR", name:"British Pound / Malaysian Ringgit",    rate:5.4543, ratefmt:"5.4543", chg:null,  lo:null,   hi:null,   asof:"6 Jul 2026, intraday" },
+  { pair:"JPY/MYR", name:"Japanese Yen / Malaysian Ringgit (per 100¥)", rate:2.52, ratefmt:"2.5200", chg:null, lo:null, hi:null, asof:"7 Jul 2026, intraday" },
+  { pair:"CNY/MYR", name:"Chinese Yuan / Malaysian Ringgit",     rate:0.6004, ratefmt:"0.6004", chg:null,  lo:null,   hi:null,   asof:"7 Jul 2026, intraday" },
+  { pair:"SGD/MYR", name:"Singapore Dollar / Malaysian Ringgit", rate:3.1578, ratefmt:"3.1578", chg:0.07,  lo:null,   hi:null,   asof:"7 Jul 2026, intraday" },
+  { pair:"AUD/MYR", name:"Australian Dollar / Malaysian Ringgit",rate:2.8275, ratefmt:"2.8275", chg:null,  lo:null,   hi:null,   asof:"7 Jul 2026, intraday" },
+  { pair:"CHF/MYR", name:"Swiss Franc / Malaysian Ringgit",      rate:5.0914, ratefmt:"5.0914", chg:null,  lo:null,   hi:null,   asof:"7 Jul 2026, intraday" },
+  { pair:"CAD/MYR", name:"Canadian Dollar / Malaysian Ringgit",  rate:2.8690, ratefmt:"2.8690", chg:null,  lo:null,   hi:null,   asof:"6 Jul 2026, intraday" }
 ];
 
 const WATCHLIST = [
