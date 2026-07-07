@@ -254,6 +254,7 @@
 
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
     <button class="tab" id="tabMarkets" role="tab" data-panel="markets" aria-selected="true">Markets</button>
+    <button class="tab" id="tabForex" role="tab" data-panel="forex" aria-selected="false">Forex</button>
     <button class="tab" id="tabIpo" role="tab" data-panel="ipo" aria-selected="false">IPO Watch</button>
   </nav>
 
@@ -363,6 +364,36 @@
   </section>
   </div>
 
+  <div id="panelForex" hidden>
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2 class="card-title">Forex Watchlist</h2>
+        <p class="card-sub" id="fxSub"></p>
+      </div>
+    </div>
+    <div class="tbl-scroll">
+      <table id="fxTable">
+        <thead>
+          <tr>
+            <th>Pair</th>
+            <th>Name</th>
+            <th class="num">Rate</th>
+            <th class="num">1D %</th>
+            <th>52-wk range</th>
+            <th>As of</th>
+          </tr>
+        </thead>
+        <tbody id="fxBody"></tbody>
+      </table>
+    </div>
+    <p class="hint" style="color:var(--muted); font-size:11.5px; margin-top:10px;">
+      First version tracks USD/MYR only — more pairs will be added as the watchlist grows. "–" marks a figure
+      not found in the sources reviewed at research time.
+    </p>
+  </section>
+  </div>
+
   <div id="panelIPO" hidden>
   <div class="filters" role="group" aria-label="IPO filters">
     <div class="fgroup">
@@ -456,6 +487,10 @@ const MY_SENTIMENT = [
   { badge:"Falling", dir:-1, label:"Trading participation", detail:"Retail volume −20.6%, local institutional volume −35.1%", date:"recent weeks" }
 ];
 const MY_SENTIMENT_NOTE = "Foreign investors have sold Bursa for six straight weeks, but local institutions have offset that with ten straight weeks of buying, concentrated in tech, industrials and financial services (+RM319.8m combined) — consistent with the semiconductor and AI-data-centre themes elsewhere on this page. Overall volume is thinner, which can make lower-liquidity counters swing harder in either direction.";
+
+const FX_WATCHLIST = [
+  { pair:"USD/MYR", name:"US Dollar / Malaysian Ringgit", rate:4.1403, ratefmt:"4.1403", chg:-0.18, lo:4.1180, hi:4.4750, asof:"6 Jul 2026, intraday" }
+];
 
 const WATCHLIST = [
   { ticker:"AAPL",  name:"Apple",           market:"us", price:308.63, pricefmt:"$308.63", chg:4.84,  pe:37.3, lo:201.50, hi:317.40 },
@@ -700,6 +735,26 @@ document.querySelector("#wlTable thead").addEventListener("click", e => {
   renderWatchlist();
 });
 
+/* ---------------- forex watchlist ---------------- */
+
+function renderFx(){
+  const body = $("#fxBody");
+  body.replaceChildren();
+  for (const r of FX_WATCHLIST){
+    const chgCell = r.chg == null
+      ? el("span", { class:"na", text:"–" })
+      : el("span", { class:r.chg >= 0 ? "up" : "down", text:fmtPct1(r.chg) });
+    body.append(el("tr", null,
+      el("td", null, el("span", { class:"tick", text:r.pair })),
+      el("td", { text:r.name }),
+      el("td", { class:"num", text:r.ratefmt }),
+      el("td", { class:"num" }, chgCell),
+      el("td", null, meter(r.lo, r.hi, r.rate)),
+      el("td", { text:r.asof })));
+  }
+  $("#fxSub").textContent = `${FX_WATCHLIST.length} pair${FX_WATCHLIST.length === 1 ? "" : "s"} tracked`;
+}
+
 /* ---------------- IPO watch ---------------- */
 
 function statTile(k, v){
@@ -776,6 +831,7 @@ const tabs = document.querySelectorAll(".tab");
 tabs.forEach(t => t.addEventListener("click", () => {
   tabs.forEach(x => x.setAttribute("aria-selected", String(x === t)));
   $("#panelMarkets").hidden = t.dataset.panel !== "markets";
+  $("#panelForex").hidden = t.dataset.panel !== "forex";
   $("#panelIPO").hidden = t.dataset.panel !== "ipo";
 }));
 
@@ -787,6 +843,7 @@ renderSentiment();
 renderMoves();
 updateMoveCards();
 renderWatchlist();
+renderFx();
 renderIPOs();
 </script>
 
